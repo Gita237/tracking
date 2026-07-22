@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwiftRoute | Premium Shipment Tracking</title>
+    <!-- Google Fonts: Inter and Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Leaflet.js CSS (Interactive Mapping) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <!-- Custom CSS Link -->
+    <link rel="stylesheet" href="tracking.css">
+</head>
+
+<body class="dark-theme">
+    <!-- Main App Navigation -->
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path class="arrow-path" d="M13 5L20 12L13 19" stroke="url(#logo-grad)" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                    <path class="line-path" d="M4 12H20" stroke="url(#logo-grad)" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                    <defs>
+                        <linearGradient id="logo-grad" x1="4" y1="12" x2="20" y2="12" gradientUnits="userSpaceOnUse">
+                            <stop offset="0%" stop-color="#ff6200" />
+                            <stop offset="100%" stop-color="#8a2be2" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <span class="logo-text">Swift<span class="highlight">Route</span></span>
+            </div>
+
+            <nav class="nav-links">
+                <a href="#tracker" class="nav-link active" id="nav-tracker-btn">Tracker</a>
+                <a href="#shipment-portal" class="nav-link" id="nav-ship-btn">Ship a Package</a>
+                <a href="#watchlist" class="nav-link" id="nav-watchlist-btn">Dashboard & Watchlist</a>
+            </nav>
+
+            <div class="header-utils">
+                <button class="theme-toggle" id="theme-toggle-btn" aria-label="Toggle visual theme">
+                    <!-- Sun Icon (Light mood switcher) --><svg class="sun-icon" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="4" />
+                        <path
+                            d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                    </svg>
+                    <!-- Moon Icon (Dark mood switcher) --><svg class="moon-icon" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                    </svg>
+                </button>
+                <div class="user-badge">
+                    <div class="avatar">AN</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="app-main-content">
+        <!-- Hero Search Section -->
+        <section class="hero-search-section" id="tracker">
+            <div class="hero-bg-glow"></div>
+            <div class="hero-content">
+                <span class="eyebrow">Enterprise Logistics & Shipment Tracking</span>
+                <h1>Locate Your Shipments Instantly</h1>
+                <p class="subtitle">Experience real-time transit intelligence with FedEx-inspired micro-updates.</p>
+
+                <form class="tracking-search-form" id="search-form">
+                    <div class="search-input-wrapper">
+                        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.3-4.3" />
+                        </svg>
+                        <input type="text" id="tracking-input"
+                            placeholder="Enter Tracking ID (e.g. SR-987-654, FED-321-456)" required autocomplete="off">
+                        <button type="submit" class="submit-btn" id="track-btn">
+                            <span class="btn-text">Track Shipment</span>
+                            <span class="btn-spinner hidden"></span>
+                        </button>
+                    </div>
+                </form>
+
+                <div class="suggestion-tags">
+                    <span class="tag-label">Suggestions:</span>
+                    <button class="suggest-badge" data-trkid="SR-987-654">SR-987-654 (Delivered)</button>
+                    <button class="suggest-badge" data-trkid="SR-321-456">SR-321-456 (In Transit)</button>
+                    <button class="suggest-badge" data-trkid="SR-777-888">SR-777-888 (Out for Delivery)</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tracking Results Grid (Dynamically shown / populated) -->
+        <section class="tracking-results-grid hidden" id="results-section">
+            <!-- Left Info Panel & Timeline Stepper -->
+            <div class="column-details">
+                <!-- Brief Summary Bar -->
+                <div class="card status-summary-card">
+                    <div class="status-header">
+                        <div class="status-badge" id="status-badge-indicator">
+                            <span class="pulse-dot"></span>
+                            <span id="txt-status-badge">In Transit</span>
+                        </div>
+                        <button class="watchlist-action-btn" id="watchlist-toggle-btn">
+                            <svg class="bookmark-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+                            </svg>
+                            <span id="watchlist-btn-text">Save to Watchlist</span>
+                        </button>
+                    </div>
+
+                    <div class="delivery-time-meta">
+                        <span class="meta-label" id="delivery-heading">Estimated Delivery</span>
+                        <div class="delivery-date-highlight" id="txt-delivery-date">Wednesday, July 15 by 5:00 PM</div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="shipping-progress">
+                        <div class="progress-bar-track">
+                            <div class="progress-bar-fill" id="status-percentage-fill" style="width: 60%;"></div>
+                        </div>
+                        <div class="progress-steps-labels">
+                            <span class="done">Ordered</span>
+                            <span class="done">Departed</span>
+                            <span class="active" id="progress-transit-label">In Transit</span>
+                            <span id="progress-delivery-label">Delivered</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shipment details card -->
+                <div class="card shipment-specs-card">
+                    <h3>Shipment Details</h3>
+                    <div class="specs-grid">
+                        <div class="spec-item">
+                            <span class="spec-label">Tracking ID</span>
+                            <span class="spec-value" id="spec-trkid">-</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Service Type</span>
+                            <span class="spec-value" id="spec-service">SwiftRoute Priority Express</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Weight</span>
+                            <span class="spec-value" id="spec-weight">8.4 lbs / 3.8 kg</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Dimensions</span>
+                            <span class="spec-value" id="spec-dims">14" x 12" x 8"</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Origin</span>
+                            <span class="spec-value" id="spec-origin">Austin, TX</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Destination</span>
+                            <span class="spec-value" id="spec-dest">Seattle, WA</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Stepper Timelines -->
+                <div class="card timeline-history-card">
+                    <h3>Travel History</h3>
+                    <div class="timeline-stepper" id="timeline-stepper-container">
+                        <!-- Filled dynamically by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column Map & Actions -->
+            <div class="column-visuals">
+                <!-- Map Card -->
+                <div class="card map-card">
+                    <div class="map-header">
+                        <h3>Transit Route Visualization</h3>
+                        <span class="map-subtitle" id="map-route-text">Austin, TX to Seattle, WA</span>
+                    </div>
+                    <div class="map-position-wrapper">
+                        <div class="map-view-container" id="map-target">
+                            <!-- Leaflet map loaded here -->
+                        </div>
+                    </div>
+                    <!-- Live Telemetry HUD Panel -->
+                    <div class="telemetry-hud" id="map-telemetry-hud">
+                        <div class="telemetry-hud-header">
+                            <span class="telemetry-title">LIVE TELEMETRY FEED</span>
+                            <div class="signal-indicator">
+                                <span class="signal-dot pulsing"></span>
+                                <span class="signal-text">GPS ACTIVE</span>
+                            </div>
+                        </div>
+                        <div class="telemetry-grid">
+                            <div class="telemetry-item">
+                                <span class="tel-label">Lat / Lng</span>
+                                <span class="tel-val monospace" id="tel-coords">--.----, --.----</span>
+                            </div>
+                            <div class="telemetry-item">
+                                <span class="tel-label">Speed</span>
+                                <span class="tel-val monospace" id="tel-speed">0 mph</span>
+                            </div>
+                        </div>
+                        <div class="telemetry-controls">
+                            <button type="button" class="control-btn" id="ctrl-sim-play"
+                                title="Toggle simulation (Play/Pause)">
+                                <svg class="control-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="5 3 19 12 5 21 5 3" />
+                                </svg>
+                            </button>
+                            <button type="button" class="control-btn" id="ctrl-sim-replay"
+                                title="Restart simulation from origin">
+                                <svg class="control-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                                </svg>
+                            </button>
+                            <select id="ctrl-sim-speed" title="Simulation Speed" class="tel-speed-select">
+                                <option value="1">1x Speed</option>
+                                <option value="5" selected>5x Speed</option>
+                                <option value="20">20x Speed</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions Panel -->
+                <div class="card actions-card">
+                    <h3>Delivery Actions</h3>
+                    <p class="actions-summary">Modify how or when your package arrives. These features are mocked for
+                        user test preview.</p>
+                    <div class="actions-buttons-grid">
+                        <button class="action-btn-item" onclick="openActionModal('hold')">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <line x1="9" y1="9" x2="15" y2="15" />
+                                <line x1="15" y1="9" x2="9" y2="15" />
+                            </svg>
+                            Hold at Location
+                        </button>
+                        <button class="action-btn-item" onclick="openActionModal('instructions')">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 20h9" />
+                                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                            </svg>
+                            Delivery Instructions
+                        </button>
+                        <button class="action-btn-item" onclick="openActionModal('alerts')">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                            </svg>
+                            text & Email Alerts
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- No Results / Search Prompt Placeholder -->
+        <section class="search-prompt-section" id="empty-state-section">
+            <div class="prompt-card">
+                <div class="illustrator-wrapper">
+                    <!-- SVG Package Box Drawing -->
+                    <svg viewBox="0 0 100 100" class="package-svg">
+                        <path d="M50 20 L80 35 L80 65 L50 80 L20 65 L20 35 Z" class="box-body" stroke="currentColor"
+                            stroke-width="3" fill="none" />
+                        <path d="M50 20 L50 80" class="box-line" stroke="currentColor" stroke-width="2.5" fill="none" />
+                        <path d="M20 35 L50 50 L80 35" class="box-line" stroke="currentColor" stroke-width="2.5"
+                            fill="none" />
+                        <path d="M35 27.5 L65 42.5" class="box-tape" stroke="#ff6200" stroke-width="3" fill="none" />
+                    </svg>
+                </div>
+                <h3>Quickly Locate Your Pack</h3>
+                <p>Submit a valid SwiftRoute tracking code in the bar above. Try clicking one of our prepackaged demo
+                    labels above for an instant visual flow.</p>
+            </div>
+        </section>
+
+        <!-- Client Shipment Creator Form -->
+        <section class="shipping-portal-section hidden" id="shipment-portal">
+            <div class="section-title-wrapper">
+                <h2>Shipment Creator</h2>
+                <p>Register a new parcel in the SwiftRoute network to generate a custom tracking label</p>
+            </div>
+
+            <div class="card shipping-portal-card">
+                <form id="shipment-generator-form" class="shipping-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="ship-origin">Origin City</label>
+                            <select id="ship-origin" required>
+                                <option value="" disabled selected>Select Origin</option>
+                                <option value="Austin, TX">Austin, TX</option>
+                                <option value="Seattle, WA">Seattle, WA</option>
+                                <option value="Miami, FL">Miami, FL</option>
+                                <option value="New York, NY">New York, NY</option>
+                                <option value="Chicago, IL">Chicago, IL</option>
+                                <option value="Los Angeles, CA">Los Angeles, CA</option>
+                                <option value="Denver, CO">Denver, CO</option>
+                                <option value="Atlanta, GA">Atlanta, GA</option>
+                                <option value="Boston, MA">Boston, MA</option>
+                                <option value="Minneapolis, MN">Minneapolis, MN</option>
+                                <option value="Dallas, TX">Dallas, TX</option>
+                                <option value="San Francisco, CA">San Francisco, CA</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="ship-destination">Destination City</label>
+                            <select id="ship-destination" required>
+                                <option value="" disabled selected>Select Destination</option>
+                                <option value="Austin, TX">Austin, TX</option>
+                                <option value="Seattle, WA">Seattle, WA</option>
+                                <option value="Miami, FL">Miami, FL</option>
+                                <option value="New York, NY">New York, NY</option>
+                                <option value="Chicago, IL">Chicago, IL</option>
+                                <option value="Los Angeles, CA">Los Angeles, CA</option>
+                                <option value="Denver, CO">Denver, CO</option>
+                                <option value="Atlanta, GA">Atlanta, GA</option>
+                                <option value="Boston, MA">Boston, MA</option>
+                                <option value="Minneapolis, MN">Minneapolis, MN</option>
+                                <option value="Dallas, TX">Dallas, TX</option>
+                                <option value="San Francisco, CA">San Francisco, CA</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="ship-weight">Package Weight (lbs)</label>
+                            <input type="number" id="ship-weight" placeholder="e.g. 5.5" min="0.1" step="0.1" required
+                                autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label for="ship-service">Service Level</label>
+                            <select id="ship-service" required>
+                                <option value="SwiftRoute Priority Overnight">SwiftRoute Priority Overnight</option>
+                                <option value="SwiftRoute Standard Ground" selected>SwiftRoute Standard Ground</option>
+                                <option value="SwiftRoute Domestic Saver">SwiftRoute Domestic Saver</option>
+                                <option value="SwiftRoute Air Standard">SwiftRoute Air Standard</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-submit-wrapper">
+                        <button type="submit" class="submit-btn full-width">
+                            <span class="btn-text">Generate Shipment Label & Track</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Dashboard Dashboard/Saved watchlist Section -->
+        <section class="watchlist-section" id="watchlist">
+            <div class="section-title-wrapper">
+                <h2>Your Shipping Dashboard</h2>
+                <p>Saved packages tracked in this session</p>
+            </div>
+
+            <div class="watchlist-grid" id="watchlist-items-target">
+                <!-- Rendered dynamically -->
+            </div>
+
+            <div class="watchlist-empty-state hidden" id="watchlist-empty-state">
+                <svg viewBox="0 0 24 24" class="empty-icon" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="m15 9-6 6M9 9l6 6" />
+                </svg>
+                <p>No parcels currently on your radar screen. Save active lookups to track them here closely.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Generic Modal Dialog -->
+    <div class="modal-backdrop hidden" id="action-modal" onclick="closeActionModal(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 id="modal-title">Action Request</h3>
+                <button class="close-modal-btn" onclick="closeActionModal(event)">times</button>
+            </div>
+            <div class="modal-body" id="modal-body-content">
+                <!-- Dynamic text populated by JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary-btn" onclick="closeActionModal(event)">Close</button>
+                <button class="modal-btn primary-btn" id="modal-affirm-btn" onclick="confirmActionModal()">Confirm
+                    Update</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast Popup -->
+    <div class="toast-container" id="toast-wrapper"></div>
+
+    <!-- Leaflet.js Interactive Maps Library -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Core Application Logic -->
+    <script src="tracking.js"></script>
+</body>
+
+</html>
